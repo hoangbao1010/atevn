@@ -7,19 +7,14 @@ get_header();
 ?>	
 
 <div class="page-wrapper">
-	<div class="qb_content">
-		<div class="banner_news_homepage">
-			<div class="container">
-				<div class="row">
-					<div class="col-sm-9">
-						<?php echo do_shortcode('[sc_banner_hp]'); ?>
-					</div>
-					<div class="col-sm-3">
-						<?php echo do_shortcode('[sc_news_hp]'); ?>
-					</div>
-				</div>
-			</div>
-		</div>
+	<div class="g_content">
+		<?php 
+		if(have_posts()) :
+			while(have_posts()) : the_post();
+				the_content();
+			endwhile;
+		endif;
+		?>
 	</div>
 </div>
 

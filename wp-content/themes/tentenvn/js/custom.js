@@ -16,16 +16,15 @@ jQuery(document).ready(function(){
 					}, 1000);
 				}); 
 			// SLIDE
-			if(jQuery('.banner_homepage').length>0){
+			if(jQuery('.banner_home').length>0){
 				console.log(1);
-				$('.banner_homepage ul').slick({
+				$('.banner_home ul').slick({
 					dots: true,
 					infinite: true,
-					prevArrow: false,
-					nextArrow: false,
-					speed: 300,
-					autoplay:true,
-					autoplaySpeed:1500,
+					arrows: true,
+				    // speed: 300,
+				    // autoplay:true,
+				    // autoplaySpeed:1500,
 					slidesToShow: 1,
 					slidesToScroll: 1,
 					responsive: [

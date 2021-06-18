@@ -2,7 +2,7 @@
 
 <footer class="footer">
   <?php
-  $post_id = 19;
+  $post_id = 10;
   if ( class_exists( 'SiteOrigin_Panels' ) && get_post_meta( $post_id, 'panels_data', true ) ) {
     echo SiteOrigin_Panels::renderer()->render( $post_id );
   } else {
@@ -10,9 +10,9 @@
   }
   ?>
 </footer>
-<div class="scrolltop">
+<!-- <div class="scrolltop">
   <i class="fa fa-angle-up" aria-hidden="true"></i> 
-</div>
+</div> -->
 <?php wp_footer(); ?>
 <script src="<?php echo BASE_URL; ?>/js/wow.min.js"></script>
 <script src="<?php echo BASE_URL; ?>/js/custom.js"></script>

@@ -1,73 +1,130 @@
 <?php 
-	// shortcode sk sidebar homepage
-function myshortcode_banner_homepage(){ 
-	ob_start();?>
-	<div class="banner_homepage">
-		<?php $banner_arg = array(
-			'post_type' => 'slide',
-			'order' => 'ASC',
-			'orderby' => 'date',
-			'post_status' => 'publish',
-			'posts_per_page' => -1
-		);
-		$banner_query = new WP_Query($banner_arg);
-		if($banner_query->have_posts()) : ?>
-			<ul>
-				<?php while ($banner_query->have_posts()) : $banner_query->the_post(); ?>
-					<li>
-						<?php 
-						global $post;
-						$banner_image = wp_get_attachment_image_src(get_post_thumbnail_id($post->ID), $size = 'large'); ?>
-						<figure style="background: url('<?php echo $banner_image[0]; ?>');"><a href="#"></a></figure>
-					</li>
-				<?php endwhile; 
-				wp_reset_postdata();
-				?>
-			</ul>
-			<?php else : echo 'No data'; 
-			endif; ?>
-		</div>
-		<?php 
-		return ob_get_clean();
+   // shortcode social header info
+function myshortcode_header_info()
+{
+	ob_start();
+	$phone = get_option('phone');
+	$phone_trim = trim($phone);
+	$address = get_option('address_header');
+	$address_trim = trim($address);
+	if (get_option('phone') || get_option('address_header'))
+	{
+		?>
+		<ul>
+			<?php if (get_option('phone'))
+			{ ?>
+				<li> Hotline:
+					<a href="tel:<?php echo $phone_trim; ?>"><?php echo $phone_trim; ?></a>
+				</li>
+				<?php
+			} ?>
+			<?php if (get_option('address_header'))
+			{ ?>
+				<li>  - Email:
+					<a href="mailto:<?php echo $address_trim; ?>"><?php echo $address_trim; ?></a>
+				</li>
+				<?php
+			} ?>
+		</ul>
+		<?php
 	}
-	add_shortcode('sc_banner_hp','myshortcode_banner_homepage');
+	return ob_get_clean();
+}
+add_shortcode('sc_tel_hd', 'myshortcode_header_info');
 
-	// shortcode tintuc homepage
-	function myshortcode_news_homepage(){ 
-		ob_start();?>
-		<div class="news_homepage">
-			<?php $title_hp = get_cat_name(31);?>
-			<h2 class="title_home_page"><a href="<?php echo get_category_link(31); ?>">Tin tức</a></h2>
-			<?php $news_arg = array(
-				'post_type' => 'post',
-				'order' => 'ASC',
-				'orderby' => 'date',
-				'post_status' => 'publish',
-				'cat' => 31,
-				'posts_per_page' => 5
-			);
-			$news_query = new WP_Query($news_arg);
-			if($news_query->have_posts()) : ?>
-				<ul>
-					<?php while ($news_query->have_posts()) : $news_query->the_post(); ?>
-						<li>
+	// shortcode news homepage
+function myshortcode_news_hp(){ 
+	ob_start();?>
+	<div class="qb_news_hp">
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="ct_left">
+					<?php $news_arg = array(
+						'post_type' => 'post',
+						'order' => 'ASC',
+						'orderby' => 'date',
+						'post_status' => 'publish',
+						'cat' => 1,
+						'posts_per_page' => 1
+					);
+					$news_query = new WP_Query($news_arg);
+					if($news_query->have_posts()) : ?>
+						<?php while ($news_query->have_posts()) : $news_query->the_post(); ?>
 							<?php 
 							global $post;
-							$cptpp_image = wp_get_attachment_image_src(get_post_thumbnail_id($post->ID), $size = 'large'); ?>
-							<a href="<?php the_permalink(); ?>" target="_blank">
-								<figure style="background: url('<?php echo $cptpp_image[0]; ?>');"></figure>
-								<h4><?php the_title(); ?></h4>
-							</a>
-						</li>
-					<?php endwhile; 
-					wp_reset_postdata();
-					?>
-				</ul>
-				<?php else : echo 'No data'; 
-				endif; ?>
-
+							$sk_image = wp_get_attachment_image_src(get_post_thumbnail_id($post->ID), $size = 'large'); ?>
+							<div class="wrap_figure">
+								<figure style="background: url('<?php echo $sk_image[0]; ?>');"><a href="<?php the_permalink(); ?>"></a></figure>
+							</div>
+							<h4><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h4>
+						<?php endwhile; 
+						wp_reset_postdata();
+						?>
+						<?php else : echo 'No data'; 
+						endif; ?>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="ct_right">
+						<?php $news_arg = array(
+							'post_type' => 'post',
+							'order' => 'ASC',
+							'orderby' => 'date',
+							'post_status' => 'publish',
+							'cat' => 1,
+							'posts_per_page' => 4,
+							'offset' => 1
+						);
+						$news_query = new WP_Query($news_arg);
+						if($news_query->have_posts()) : ?>
+							<ul>
+								<?php while ($news_query->have_posts()) : $news_query->the_post(); ?>
+									<li>
+										<h4><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h4>
+										<span class="qb_date_post"> Ngày đăng: <?php the_time('d/m/Y'); ?></span>
+									</li>
+								<?php endwhile; 
+								wp_reset_postdata();
+								?>
+							</ul>
+							<?php else : echo 'No data'; 
+							endif; ?>
+						</div>
+					</div>
+				</div>
 			</div>
 			<?php 
 			return ob_get_clean();
 		}
-		add_shortcode('sc_news_hp','myshortcode_news_homepage');
+		add_shortcode('sc_news_hp','myshortcode_news_hp');
+
+			// shortcode sidebar news
+		function myshortcode_sidebar_news(){ 
+			ob_start();?>
+			<div class="qb_sidebar_news">
+				<?php $title_hp = get_cat_name(1);?>
+				<h2 class="title_news"><a href="<?php echo get_category_link(1); ?>" target="_blank"><?php echo $title_hp; ?></a></h2>
+				<div class="sidebar_news_ct">
+					<?php $news_arg = array(
+						'post_type' => 'post',
+						'order' => 'ASC',
+						'orderby' => 'date',
+						'post_status' => 'publish',
+						'cat' => 1,
+						'posts_per_page' => 5
+					);
+					$news_query = new WP_Query($news_arg);
+					if($news_query->have_posts()) : ?>
+						<?php while ($news_query->have_posts()) : $news_query->the_post(); ?>
+							<h4><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h4>
+						<?php endwhile; 
+						wp_reset_postdata();
+						?>
+						<?php else : echo 'No data'; 
+						endif; ?>
+					</div>
+				</div>
+				<?php 
+				return ob_get_clean();
+			}
+			add_shortcode('sc_sidebar_news','myshortcode_sidebar_news');

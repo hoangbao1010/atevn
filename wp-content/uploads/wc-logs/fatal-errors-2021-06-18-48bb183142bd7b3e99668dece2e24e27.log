@@ -1,0 +1,4 @@
+2021-06-18T02:20:36+00:00 CRITICAL Cannot redeclare custom_product_tabs() (previously declared in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\woocommerce\add_meta_box.php:75) in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\woocommerce\add_meta_box.php on line 191
+
+2021-06-18T02:21:58+00:00 CRITICAL Cannot redeclare custom_product_tabs() (previously declared in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\woocommerce\add_meta_box.php:75) in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\woocommerce\add_meta_box.php on line 191
+

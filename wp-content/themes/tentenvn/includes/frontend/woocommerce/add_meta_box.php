@@ -8,7 +8,7 @@ if ( ! function_exists( 'create_custom_meta_box' ) )
   function create_custom_meta_box()
   {
     add_meta_box(
-      'custom_product_meta_box',  __( 'Thông số kỹ thuật', 'cmb' ), 'add_custom_content_meta_box', 'product', 'normal','default'
+      'custom_product_meta_box',  __( 'Khuyến nghị', 'cmb' ), 'add_custom_content_meta_box', 'product', 'normal','default'
     );
   }
 }
@@ -18,10 +18,10 @@ if ( ! function_exists( 'add_custom_content_meta_box' ) ){
   function add_custom_content_meta_box( $post ){
         $prefix = '_bhww_'; // global $prefix;
 
-        $tskt = get_post_meta($post->ID, $prefix.'tskt_ip', true) ? get_post_meta($post->ID, $prefix.'tskt_ip', true) : '';
+        $advice = get_post_meta($post->ID, $prefix.'advice_ip', true) ? get_post_meta($post->ID, $prefix.'advice_ip', true) : '';
         $args['textarea_rows'] = 6;
 
-        wp_editor( $tskt, 'tskt_ip', $args );
+        wp_editor( $advice, 'advice_ip', $args );
 
 
         echo '<input type="hidden" name="custom_product_field_nonce" value="' . wp_create_nonce() . '">';
@@ -64,7 +64,7 @@ if ( ! function_exists( 'add_custom_content_meta_box' ) ){
         }
 
         // Sanitize user input and update the meta field in the database.
-        update_post_meta( $post_id, $prefix.'tskt_ip', wp_kses_post($_POST[ 'tskt_ip' ]) );
+        update_post_meta( $post_id, $prefix.'advice_ip', wp_kses_post($_POST[ 'advice_ip' ]) );
       }
     }
 
@@ -75,13 +75,13 @@ if ( ! function_exists( 'add_custom_content_meta_box' ) ){
     function custom_product_tabs( $tabs ) {
       global $post;
 
-      $product_tskt = get_post_meta( $post->ID, '_bhww_tskt_ip', true );
+      $product_advice = get_post_meta( $post->ID, '_bhww_advice_ip', true );
 
-      if ( ! empty( $product_tskt ) )
-        $tabs['tskt_tab'] = array(
-          'title'    => __( 'Thông số kỹ thuật', 'woocommerce' ),
+      if ( ! empty( $product_advice ) )
+        $tabs['advice_tab'] = array(
+          'title'    => __( 'Khuyến nghị', 'woocommerce' ),
           'priority' => 10,
-          'callback' => 'tskt_product_tab_content'
+          'callback' => 'advice_product_tab_content'
         );
 
       return $tabs;
@@ -91,13 +91,13 @@ if ( ! function_exists( 'add_custom_content_meta_box' ) ){
     add_filter('woocommerce_product_description_heading', '__return_null');
 
 // Add content to custom tab in product single pages (1)
-    function tskt_product_tab_content() {
+    function advice_product_tab_content() {
       global $post;
 
-      $product_tskt = get_post_meta( $post->ID, '_bhww_tskt_ip', true );
+      $product_advice = get_post_meta( $post->ID, '_bhww_advice_ip', true );
 
-      if ( ! empty( $product_tskt ) ) {
+      if ( ! empty( $product_advice ) ) {
         // Updated to apply the_content filter to WYSIWYG content
-        echo apply_filters( 'the_content', $product_tskt );
+        echo apply_filters( 'the_content', $product_advice );
       }
     }
