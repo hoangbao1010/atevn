@@ -562,7 +562,7 @@ msgid "Live Editor Quick Link"
 msgstr ""
 
 #: inc/settings.php:273
-msgid "Display a Live Editor button in the admin bar."
+msgid "Display a Live Editor button in the WordPress admin bar."
 msgstr ""
 
 #: inc/settings.php:278
@@ -610,7 +610,7 @@ msgid "Limit Parallax Motion"
 msgstr ""
 
 #: inc/settings.php:312
-msgid "How many pixels of scrolling result in a single pixel of parallax motion. 0 means automatic. Lower values give more noticeable effect."
+msgid "How many pixels of scrolling results in a single pixel of parallax motion. 0 means automatic. Lower values give more noticeable effect."
 msgstr ""
 
 #: inc/settings.php:318
@@ -646,11 +646,11 @@ msgid "Display the %sSiteOrigin Premium%s upgrade teaser in the Page Builder too
 msgstr ""
 
 #: inc/settings.php:346
-msgid "Default To Page Builder Interface"
+msgid "Default to Page Builder Interface"
 msgstr ""
 
 #: inc/settings.php:348
-msgid "New Classic Editor posts/pages that you create will start with the Page Builder loaded. The %s\"Use Classic Editor for new posts\"%s setting must be enabled."
+msgid "New Classic Editor posts/pages that you create will start with the Page Builder loaded. The %s\"Use Classic Editor for New Posts\"%s setting must be enabled."
 msgstr ""
 
 #: inc/settings.php:355
@@ -666,7 +666,7 @@ msgid "Preview"
 msgstr ""
 
 #: inc/settings.php:361
-msgid "Whether to display layout blocks in edit mode or preview mode in the block editor."
+msgid "Whether to display SiteOrigin Layout Blocks in edit mode or preview mode in the Block Editor."
 msgstr ""
 
 #: inc/settings.php:367
@@ -686,7 +686,7 @@ msgid "Add Widget Class"
 msgstr ""
 
 #: inc/settings.php:380
-msgid "Add the widget class to Page Builder widgets. Disable this if you're experiencing conflicts."
+msgid "Add the widget class to Page Builder widgets. Disable if theme widget styles are negatively impacting widgets in Page Builder."
 msgstr ""
 
 #: inc/settings.php:385
@@ -698,7 +698,7 @@ msgid "Load legacy widgets from Page Builder 1."
 msgstr ""
 
 #: inc/settings.php:392
-msgid "Display recommend widgets in Page Builder add widget dialog."
+msgid "Display recommend widgets in the Page Builder Add Widget dialog."
 msgstr ""
 
 #: inc/settings.php:397
@@ -706,7 +706,7 @@ msgid "Instant Open Widgets"
 msgstr ""
 
 #: inc/settings.php:398
-msgid "Open a widget form as soon as its added to a page."
+msgid "Open a widget form as soon as it's added to a page."
 msgstr ""
 
 #: inc/settings.php:404, inc/styles-admin.php:103
@@ -718,7 +718,7 @@ msgid "Responsive Layout"
 msgstr ""
 
 #: inc/settings.php:413
-msgid "Collapse widgets, rows and columns on mobile devices."
+msgid "Collapse widgets, rows, and columns on mobile devices."
 msgstr ""
 
 #: inc/settings.php:418
@@ -746,7 +746,7 @@ msgid "Use Legacy Layout Engine"
 msgstr ""
 
 #: inc/settings.php:430
-msgid "The CSS and HTML uses floats instead of flexbox for compatibility with very old browsers."
+msgid "For compatibility, the Legacy Layout Engine switches from Flexbox to float when older browsers are detected."
 msgstr ""
 
 #: inc/settings.php:436
@@ -754,7 +754,7 @@ msgid "Tablet Width"
 msgstr ""
 
 #: inc/settings.php:437
-msgid "Device width, in pixels, to collapse into a tablet view ."
+msgid "Device width, in pixels, to collapse into a tablet view."
 msgstr ""
 
 #: inc/settings.php:443
@@ -762,7 +762,7 @@ msgid "Mobile Width"
 msgstr ""
 
 #: inc/settings.php:444
-msgid "Device width, in pixels, to collapse into a mobile view ."
+msgid "Device width, in pixels, to collapse into a mobile view."
 msgstr ""
 
 #: inc/settings.php:450
@@ -786,7 +786,7 @@ msgid "Last Row With Margin"
 msgstr ""
 
 #: inc/settings.php:464
-msgid "Allow margin in last row."
+msgid "Allow margin below the last row."
 msgstr ""
 
 #: inc/settings.php:470

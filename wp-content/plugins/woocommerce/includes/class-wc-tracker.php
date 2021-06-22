@@ -7,8 +7,10 @@
  *
  * @class WC_Tracker
  * @since 2.3.0
- * @package WooCommerce/Classes
+ * @package WooCommerce\Classes
  */
+
+use Automattic\Jetpack\Constants;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -38,7 +40,7 @@ class WC_Tracker {
 	 */
 	public static function send_tracking_data( $override = false ) {
 		// Don't trigger this on AJAX Requests.
-		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+		if ( Constants::is_true( 'DOING_AJAX' ) ) {
 			return;
 		}
 
@@ -85,6 +87,28 @@ class WC_Tracker {
 	}
 
 	/**
+	 * Test whether this site is a staging site according to the Jetpack criteria.
+	 *
+	 * With Jetpack 8.1+, Jetpack::is_staging_site has been deprecated.
+	 * \Automattic\Jetpack\Status::is_staging_site is the replacement.
+	 * However, there are version of JP where \Automattic\Jetpack\Status exists, but does *not* contain is_staging_site method,
+	 * so with those, code still needs to use the previous check as a fallback.
+	 *
+	 * @return bool
+	 */
+	private static function is_jetpack_staging_site() {
+		if ( class_exists( '\Automattic\Jetpack\Status' ) ) {
+			// Preferred way of checking with Jetpack 8.1+.
+			$jp_status = new \Automattic\Jetpack\Status();
+			if ( is_callable( array( $jp_status, 'is_staging_site' ) ) ) {
+				return $jp_status->is_staging_site();
+			}
+		}
+
+		return ( class_exists( 'Jetpack' ) && is_callable( 'Jetpack::is_staging_site' ) && Jetpack::is_staging_site() );
+	}
+
+	/**
 	 * Get all the tracking data.
 	 *
 	 * @return array
@@ -109,9 +133,10 @@ class WC_Tracker {
 		$data['inactive_plugins'] = $all_plugins['inactive_plugins'];
 
 		// Jetpack & WooCommerce Connect.
-		$data['jetpack_version']    = defined( 'JETPACK__VERSION' ) ? JETPACK__VERSION : 'none';
+
+		$data['jetpack_version']    = Constants::is_defined( 'JETPACK__VERSION' ) ? Constants::get_constant( 'JETPACK__VERSION' ) : 'none';
 		$data['jetpack_connected']  = ( class_exists( 'Jetpack' ) && is_callable( 'Jetpack::is_active' ) && Jetpack::is_active() ) ? 'yes' : 'no';
-		$data['jetpack_is_staging'] = ( class_exists( 'Jetpack' ) && is_callable( 'Jetpack::is_staging_site' ) && Jetpack::is_staging_site() ) ? 'yes' : 'no';
+		$data['jetpack_is_staging'] = self::is_jetpack_staging_site() ? 'yes' : 'no';
 		$data['connect_installed']  = class_exists( 'WC_Connect_Loader' ) ? 'yes' : 'no';
 		$data['connect_active']     = ( class_exists( 'WC_Connect_Loader' ) && wp_next_scheduled( 'wc_connect_fetch_service_schemas' ) ) ? 'yes' : 'no';
 		$data['helper_connected']   = self::get_helper_connected();
@@ -137,6 +162,12 @@ class WC_Tracker {
 
 		// Template overrides.
 		$data['admin_user_agents'] = self::get_admin_user_agents();
+
+		// Cart & checkout tech (blocks or shortcodes).
+		$data['cart_checkout'] = self::get_cart_checkout_info();
+
+		// WooCommerce Admin info.
+		$data['wc_admin_disabled'] = apply_filters( 'woocommerce_admin_disabled', false ) ? 'yes' : 'no';
 
 		return apply_filters( 'woocommerce_tracker_data', $data );
 	}
@@ -174,11 +205,19 @@ class WC_Tracker {
 			$memory        = max( $memory, $system_memory );
 		}
 
+		// WordPress 5.5+ environment type specification.
+		// 'production' is the default in WP, thus using it as a default here, too.
+		$environment_type = 'production';
+		if ( function_exists( 'wp_get_environment_type' ) ) {
+			$environment_type = wp_get_environment_type();
+		}
+
 		$wp_data['memory_limit'] = size_format( $memory );
 		$wp_data['debug_mode']   = ( defined( 'WP_DEBUG' ) && WP_DEBUG ) ? 'Yes' : 'No';
 		$wp_data['locale']       = get_locale();
 		$wp_data['version']      = get_bloginfo( 'version' );
 		$wp_data['multisite']    = is_multisite() ? 'Yes' : 'No';
+		$wp_data['env_type']     = $environment_type;
 
 		return $wp_data;
 	}
@@ -316,7 +355,7 @@ class WC_Tracker {
 	}
 
 	/**
-	 * Get order counts
+	 * Get order counts.
 	 *
 	 * @return array
 	 */
@@ -335,11 +374,151 @@ class WC_Tracker {
 	 * @return array
 	 */
 	private static function get_orders() {
-		$order_dates  = self::get_order_dates();
-		$order_counts = self::get_order_counts();
-		$order_totals = self::get_order_totals();
+		$order_dates    = self::get_order_dates();
+		$order_counts   = self::get_order_counts();
+		$order_totals   = self::get_order_totals();
+		$order_gateways = self::get_orders_by_gateway();
 
-		return array_merge( $order_dates, $order_counts, $order_totals );
+		return array_merge( $order_dates, $order_counts, $order_totals, $order_gateways );
+	}
+
+	/**
+	 * Get order totals.
+	 *
+	 * @since 5.4.0
+	 * @return array
+	 */
+	private static function get_order_totals() {
+		global $wpdb;
+
+		$gross_total = $wpdb->get_var(
+			"
+			SELECT
+				SUM( order_meta.meta_value ) AS 'gross_total'
+			FROM {$wpdb->prefix}posts AS orders
+			LEFT JOIN {$wpdb->prefix}postmeta AS order_meta ON order_meta.post_id = orders.ID
+			WHERE order_meta.meta_key =  '_order_total'
+				AND orders.post_status in ( 'wc-completed', 'wc-refunded' )
+			GROUP BY order_meta.meta_key
+		"
+		);
+
+		if ( is_null( $gross_total ) ) {
+			$gross_total = 0;
+		}
+
+		$processing_gross_total = $wpdb->get_var(
+			"
+			SELECT
+				SUM( order_meta.meta_value ) AS 'gross_total'
+			FROM {$wpdb->prefix}posts AS orders
+			LEFT JOIN {$wpdb->prefix}postmeta AS order_meta ON order_meta.post_id = orders.ID
+			WHERE order_meta.meta_key =  '_order_total'
+				AND orders.post_status = 'wc-processing'
+			GROUP BY order_meta.meta_key
+		"
+		);
+
+		if ( is_null( $processing_gross_total ) ) {
+			$processing_gross_total = 0;
+		}
+
+		return array(
+			'gross'            => $gross_total,
+			'processing_gross' => $processing_gross_total,
+		);
+	}
+
+	/**
+	 * Get last order date.
+	 *
+	 * @return string
+	 */
+	private static function get_order_dates() {
+		global $wpdb;
+
+		$min_max = $wpdb->get_row(
+			"
+			SELECT
+				MIN( post_date_gmt ) as 'first', MAX( post_date_gmt ) as 'last'
+			FROM {$wpdb->prefix}posts
+			WHERE post_type = 'shop_order'
+			AND post_status = 'wc-completed'
+		",
+			ARRAY_A
+		);
+
+		if ( is_null( $min_max ) ) {
+			$min_max = array(
+				'first' => '-',
+				'last'  => '-',
+			);
+		}
+
+		$processing_min_max = $wpdb->get_row(
+			"
+			SELECT
+				MIN( post_date_gmt ) as 'processing_first', MAX( post_date_gmt ) as 'processing_last'
+			FROM {$wpdb->prefix}posts
+			WHERE post_type = 'shop_order'
+			AND post_status = 'wc-processing'
+		",
+			ARRAY_A
+		);
+
+		if ( is_null( $processing_min_max ) ) {
+			$processing_min_max = array(
+				'processing_first' => '-',
+				'processing_last'  => '-',
+			);
+		}
+
+		return array_merge( $min_max, $processing_min_max );
+	}
+
+	/**
+	 * Get order details by gateway.
+	 *
+	 * @return array
+	 */
+	private static function get_orders_by_gateway() {
+		global $wpdb;
+
+		$orders_by_gateway = $wpdb->get_results(
+			"
+			SELECT
+				gateway, currency, SUM(total) AS totals, COUNT(order_id) AS counts
+			FROM (
+				SELECT
+					orders.id AS order_id,
+					MAX(CASE WHEN meta_key = '_payment_method' THEN meta_value END) gateway,
+					MAX(CASE WHEN meta_key = '_order_total' THEN meta_value END) total,
+					MAX(CASE WHEN meta_key = '_order_currency' THEN meta_value END) currency
+				FROM
+					{$wpdb->prefix}posts orders
+				LEFT JOIN
+					{$wpdb->prefix}postmeta order_meta ON order_meta.post_id = orders.id
+				WHERE orders.post_type = 'shop_order'
+					AND orders.post_status in ( 'wc-completed', 'wc-processing', 'wc-refunded' )
+					AND meta_key in( '_payment_method','_order_total','_order_currency')
+				GROUP BY orders.id
+			) order_gateways
+			GROUP BY gateway, currency
+			"
+		);
+
+		$orders_by_gateway_currency = array();
+		foreach ( $orders_by_gateway as $orders_details ) {
+			$gateway  = 'gateway_' . $orders_details->gateway;
+			$currency = $orders_details->currency;
+			$count    = $gateway . '_' . $currency . '_count';
+			$total    = $gateway . '_' . $currency . '_total';
+
+			$orders_by_gateway_currency[ $count ] = $orders_details->counts;
+			$orders_by_gateway_currency[ $total ] = $orders_details->totals;
+		}
+
+		return $orders_by_gateway_currency;
 	}
 
 	/**
@@ -349,7 +528,13 @@ class WC_Tracker {
 	 */
 	private static function get_review_counts() {
 		global $wpdb;
-		$review_count = array();
+		$review_count = array( 'total' => 0 );
+		$status_map   = array(
+			'0'     => 'pending',
+			'1'     => 'approved',
+			'trash' => 'trash',
+			'spam'  => 'spam',
+		);
 		$counts       = $wpdb->get_results(
 			"
 			SELECT comment_approved, COUNT(*) AS num_reviews
@@ -359,15 +544,19 @@ class WC_Tracker {
 			",
 			ARRAY_A
 		);
-		if ( $counts ) {
-			foreach ( $counts as $count ) {
-				if ( 1 === $count['comment_approved'] ) {
-					$review_count['approved'] = $count['num_reviews'];
-				} else {
-					$review_count['pending'] = $count['num_reviews'];
-				}
-			}
+
+		if ( ! $counts ) {
+			return $review_count;
 		}
+
+		foreach ( $counts as $count ) {
+			$status = $count['comment_approved'];
+			if ( array_key_exists( $status, $status_map ) ) {
+				$review_count[ $status_map[ $status ] ] = $count['num_reviews'];
+			}
+			$review_count['total'] += $count['num_reviews'];
+		}
+
 		return $review_count;
 	}
 
@@ -495,61 +684,86 @@ class WC_Tracker {
 	}
 
 	/**
-	 * Get order totals
+	 * Search a specific post for text content.
 	 *
-	 * @return array
+	 * @param integer $post_id The id of the post to search.
+	 * @param string  $text    The text to search for.
+	 * @return string 'Yes' if post contains $text (otherwise 'No').
 	 */
-	public static function get_order_totals() {
+	public static function post_contains_text( $post_id, $text ) {
 		global $wpdb;
 
-		$gross_total = $wpdb->get_var(
-			"
-			SELECT
-				SUM( order_meta.meta_value ) AS 'gross_total'
-			FROM {$wpdb->prefix}posts AS orders
-			LEFT JOIN {$wpdb->prefix}postmeta AS order_meta ON order_meta.post_id = orders.ID
-			WHERE order_meta.meta_key =  '_order_total'
-				AND orders.post_status in ( 'wc-completed', 'wc-refunded' )
-			GROUP BY order_meta.meta_key
-		"
+		// Search for the text anywhere in the post.
+		$wildcarded = "%{$text}%";
+
+		$result = $wpdb->get_var(
+			$wpdb->prepare(
+				"
+				SELECT COUNT( * ) FROM {$wpdb->prefix}posts
+				WHERE ID=%d
+				AND {$wpdb->prefix}posts.post_content LIKE %s
+				",
+				array( $post_id, $wildcarded )
+			)
 		);
 
-		if ( is_null( $gross_total ) ) {
-			$gross_total = 0;
+		return ( '0' !== $result ) ? 'Yes' : 'No';
+	}
+
+
+	/**
+	 * Get tracker data for a specific block type on a woocommerce page.
+	 *
+	 * @param string $block_name The name (id) of a block, e.g. `woocommerce/cart`.
+	 * @param string $woo_page_name The woo page to search, e.g. `cart`.
+	 * @return array Associative array of tracker data with keys:
+	 * - page_contains_block
+	 * - block_attributes
+	 */
+	public static function get_block_tracker_data( $block_name, $woo_page_name ) {
+		$blocks = WC_Blocks_Utils::get_blocks_from_page( $block_name, $woo_page_name );
+
+		$block_present = false;
+		$attributes    = array();
+		if ( $blocks && count( $blocks ) ) {
+			// Return any customised attributes from the first block.
+			$block_present = true;
+			$attributes    = $blocks[0]['attrs'];
 		}
 
 		return array(
-			'gross' => $gross_total,
+			'page_contains_block' => $block_present ? 'Yes' : 'No',
+			'block_attributes'    => $attributes,
 		);
 	}
 
 	/**
-	 * Get last order date
+	 * Get info about the cart & checkout pages.
 	 *
-	 * @return string
+	 * @return array
 	 */
-	private static function get_order_dates() {
-		global $wpdb;
+	public static function get_cart_checkout_info() {
+		$cart_page_id     = wc_get_page_id( 'cart' );
+		$checkout_page_id = wc_get_page_id( 'checkout' );
 
-		$min_max = $wpdb->get_row(
-			"
-			SELECT
-				MIN( post_date_gmt ) as 'first', MAX( post_date_gmt ) as 'last'
-			FROM {$wpdb->prefix}posts
-			WHERE post_type = 'shop_order'
-			AND post_status = 'wc-completed'
-		",
-			ARRAY_A
+		$cart_block_data     = self::get_block_tracker_data( 'woocommerce/cart', 'cart' );
+		$checkout_block_data = self::get_block_tracker_data( 'woocommerce/checkout', 'checkout' );
+
+		return array(
+			'cart_page_contains_cart_shortcode'         => self::post_contains_text(
+				$cart_page_id,
+				'[woocommerce_cart]'
+			),
+			'checkout_page_contains_checkout_shortcode' => self::post_contains_text(
+				$checkout_page_id,
+				'[woocommerce_checkout]'
+			),
+
+			'cart_page_contains_cart_block'             => $cart_block_data['page_contains_block'],
+			'cart_block_attributes'                     => $cart_block_data['block_attributes'],
+			'checkout_page_contains_checkout_block'     => $checkout_block_data['page_contains_block'],
+			'checkout_block_attributes'                 => $checkout_block_data['block_attributes'],
 		);
-
-		if ( is_null( $min_max ) ) {
-			$min_max = array(
-				'first' => '-',
-				'last'  => '-',
-			);
-		}
-
-		return $min_max;
 	}
 }
 

@@ -105,3 +105,13 @@ a:hover{
     height: auto;
     width: 100%;
 }
+#gallery-metabox-list li {
+   float: left;
+   width: 150px;
+   text-align: center;
+   margin: 10px 10px 10px 0;
+   cursor: move;
+}
+#gallery-metabox-list li img{
+        height: 100px;
+}

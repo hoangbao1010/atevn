@@ -1,6 +1,19 @@
 
 jQuery(document).ready(function(){
-
+// FANCY BOX
+jQuery('.fancybox').fancybox({
+	buttons : [ 
+	'slideShow',
+	'share',
+	'zoom',
+	'fullScreen',
+	'close'
+	],
+	thumbs : {
+		autoStart : true
+	}
+});
+// END FANCY BOX
 				// SCROLL TO DIV
 				jQuery(window).scroll(function(){
 					if(jQuery(this).scrollTop()>500){
@@ -16,8 +29,44 @@ jQuery(document).ready(function(){
 					}, 1000);
 				}); 
 			// SLIDE
-			if(jQuery('.banner_home').length>0){
+			if(jQuery('.cat_pro_detailds ul').length>0){
 				console.log(1);
+				$('.cat_pro_detailds ul').slick({
+					dots: true,
+					infinite: true,
+					arrows: false,
+				    // speed: 300,
+				    // autoplay:true,
+				    // autoplaySpeed:1500,
+				    slidesToShow: 4,
+				    slidesToScroll: 4,
+				    responsive: [
+				    {
+				    	breakpoint: 1024,
+				    	settings: {
+				    		slidesToShow: 3,
+				    		slidesToScroll: 3,
+				    	}
+				    },
+				    {
+				    	breakpoint: 600,
+				    	settings: {
+				    		slidesToShow: 2,
+				    		slidesToScroll: 2
+				    	}
+				    },
+				    {
+				    	breakpoint: 480,
+				    	settings: {
+				    		slidesToShow: 1,
+				    		slidesToScroll: 1
+				    	}
+				    }
+				    ]
+				});
+			}
+
+			if(jQuery('.banner_home ul').length>0){
 				$('.banner_home ul').slick({
 					dots: true,
 					infinite: true,
@@ -25,35 +74,32 @@ jQuery(document).ready(function(){
 				    // speed: 300,
 				    // autoplay:true,
 				    // autoplaySpeed:1500,
-					slidesToShow: 1,
-					slidesToScroll: 1,
-					responsive: [
-					{
-						breakpoint: 1024,
-						settings: {
-							slidesToShow: 3,
-							slidesToScroll: 3,
-						}
-					},
-					{
-						breakpoint: 600,
-						settings: {
-							slidesToShow: 2,
-							slidesToScroll: 2
-						}
-					},
-					{
-						breakpoint: 480,
-						settings: {
-							slidesToShow: 1,
-							slidesToScroll: 1
-						}
-					}
-    // You can unslick at a given breakpoint now by adding:
-    // settings: "unslick"
-    // instead of a settings object
-    ]
-});
+				    slidesToShow: 1,
+				    slidesToScroll: 1,
+				    responsive: [
+				    {
+				    	breakpoint: 1024,
+				    	settings: {
+				    		slidesToShow: 3,
+				    		slidesToScroll: 3,
+				    	}
+				    },
+				    {
+				    	breakpoint: 600,
+				    	settings: {
+				    		slidesToShow: 2,
+				    		slidesToScroll: 2
+				    	}
+				    },
+				    {
+				    	breakpoint: 480,
+				    	settings: {
+				    		slidesToShow: 1,
+				    		slidesToScroll: 1
+				    	}
+				    }
+				    ]
+				});
 			}
 
 		// MENU MOBILE
@@ -135,4 +181,3 @@ jQuery(document).ready(function(){
 		});
 		
 	});
-

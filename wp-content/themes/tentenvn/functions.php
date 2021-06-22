@@ -1,13 +1,13 @@
 <?php
 define("BASE_URL", get_template_directory_uri());
 include get_template_directory().'/includes/admin/function-admin.php';
-include get_template_directory().'/includes/admin/core.php';
 include get_template_directory().'/includes/admin/custom-post-type/custom-post-type.php';
 include get_template_directory().'/includes/frontend/woocommerce/woocommerce.php';
 include get_template_directory().'/includes/frontend/woocommerce/archive.php';
 include get_template_directory().'/includes/frontend/woocommerce/add_meta_box.php';
 include get_template_directory().'/includes/frontend/woocommerce/single-product.php';
 include get_template_directory().'/includes/frontend/shortcode/shortcode.php';
+include get_template_directory().'/includes/frontend/tuyendung/order_tuyendung.php';
 
 function load_admin_style() {
   wp_register_style( 'admin_css', get_template_directory_uri() . '/css/admin.css', false, '1.0.0' );

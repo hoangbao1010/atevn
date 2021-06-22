@@ -14,6 +14,7 @@
   <i class="fa fa-angle-up" aria-hidden="true"></i> 
 </div> -->
 <?php wp_footer(); ?>
+<script src="<?php echo BASE_URL; ?>/js/jquery.fancybox.min.js"></script>
 <script src="<?php echo BASE_URL; ?>/js/wow.min.js"></script>
 <script src="<?php echo BASE_URL; ?>/js/custom.js"></script>
 </body>

@@ -55,14 +55,17 @@ jQuery( function( $ ) {
 
 		var wc_country_select_select2 = function() {
 			$( 'select.country_select:visible, select.state_select:visible' ).each( function() {
+				var $this = $( this );
+
 				var select2_args = $.extend({
-					placeholder: $( this ).attr( 'data-placeholder' ) || $( this ).attr( 'placeholder' ) || '',
+					placeholder: $this.attr( 'data-placeholder' ) || $this.attr( 'placeholder' ) || '',
+					label: $this.attr( 'data-label' ) || null,
 					width: '100%'
 				}, getEnhancedSelectFormatString() );
 
 				$( this )
 					.on( 'select2:select', function() {
-						$( this ).focus(); // Maintain focus after select https://github.com/select2/select2/issues/4384
+						$( this ).trigger( 'focus' ); // Maintain focus after select https://github.com/select2/select2/issues/4384
 					} )
 					.selectWoo( select2_args );
 			});
@@ -70,14 +73,14 @@ jQuery( function( $ ) {
 
 		wc_country_select_select2();
 
-		$( document.body ).bind( 'country_to_state_changed', function() {
+		$( document.body ).on( 'country_to_state_changed', function() {
 			wc_country_select_select2();
 		});
 	}
 
 	/* State/Country select boxes */
 	var states_json       = wc_country_select_params.countries.replace( /&quot;/g, '"' ),
-		states            = $.parseJSON( states_json ),
+		states            = JSON.parse( states_json ),
 		wrapper_selectors = '.woocommerce-billing-fields,' +
 			'.woocommerce-shipping-fields,' +
 			'.woocommerce-address-fields,' +
@@ -92,12 +95,13 @@ jQuery( function( $ ) {
 		}
 
 		var country     = $( this ).val(),
-			$statebox   = $wrapper.find( '#billing_state, #shipping_state, #calc_shipping_state' ),
-			$parent     = $statebox.closest( 'p.form-row' ),
-			input_name  = $statebox.attr( 'name' ),
-			input_id    = $statebox.attr( 'id' ),
-			value       = $statebox.val(),
-			placeholder = $statebox.attr( 'placeholder' ) || $statebox.attr( 'data-placeholder' ) || '',
+			$statebox     = $wrapper.find( '#billing_state, #shipping_state, #calc_shipping_state' ),
+			$parent       = $statebox.closest( '.form-row' ),
+			input_name    = $statebox.attr( 'name' ),
+			input_id      = $statebox.attr('id'),
+			input_classes = $statebox.attr('data-input-classes'),
+			value         = $statebox.val(),
+			placeholder   = $statebox.attr( 'placeholder' ) || $statebox.attr( 'data-placeholder' ) || '',
 			$newstate;
 
 		if ( states[ country ] ) {
@@ -106,7 +110,8 @@ jQuery( function( $ ) {
 					.prop( 'id', input_id )
 					.prop( 'name', input_name )
 					.prop( 'placeholder', placeholder )
-					.addClass( 'hidden' );
+					.attr( 'data-input-classes', input_classes )
+					.addClass( 'hidden ' + input_classes );
 				$parent.hide().find( '.select2-container' ).remove();
 				$statebox.replaceWith( $newstate );
 				$( document.body ).trigger( 'country_to_state_changed', [ country, $wrapper ] );
@@ -125,7 +130,8 @@ jQuery( function( $ ) {
 						.prop( 'id', input_id )
 						.prop( 'name', input_name )
 						.data( 'placeholder', placeholder )
-						.addClass( 'state_select' );
+						.attr( 'data-input-classes', input_classes )
+						.addClass( 'state_select ' + input_classes );
 					$statebox.replaceWith( $newstate );
 					$statebox = $wrapper.find( '#billing_state, #shipping_state, #calc_shipping_state' );
 				}
@@ -139,7 +145,7 @@ jQuery( function( $ ) {
 					$statebox.append( $option );
 				} );
 
-				$statebox.val( value ).change();
+				$statebox.val( value ).trigger( 'change' );
 
 				$( document.body ).trigger( 'country_to_state_changed', [country, $wrapper ] );
 			}
@@ -148,8 +154,9 @@ jQuery( function( $ ) {
 				$newstate = $( '<input type="text" />' )
 					.prop( 'id', input_id )
 					.prop( 'name', input_name )
-					.prop( 'placeholder', placeholder )
-					.addClass( 'input-text' );
+					.prop('placeholder', placeholder)
+					.attr('data-input-classes', input_classes )
+					.addClass( 'input-text  ' + input_classes );
 				$parent.show().find( '.select2-container' ).remove();
 				$statebox.replaceWith( $newstate );
 				$( document.body ).trigger( 'country_to_state_changed', [country, $wrapper ] );

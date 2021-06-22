@@ -3,8 +3,8 @@ Tags: page builder, responsive, parallax, widgets, blocks, gallery, layout, grid
 Requires at least: 4.7
 Tested up to: 5.7
 Requires PHP: 5.6.20
-Stable tag: 2.12.4
-Build time: 2021-06-04T16:05:38+02:00
+Stable tag: 2.12.5
+Build time: 2021-06-17T14:04:28+02:00
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 Donate link: https://siteorigin.com/downloads/premium/
@@ -101,11 +101,19 @@ We've tried to ensure that Page Builder is compatible with most plugin widgets. 
 
 == SiteOrigin Premium ==
 
-[SiteOrigin Premium](https://siteorigin.com/downloads/premium/) enhances Page Builder with a vast array of additional features and settings. Take your layouts to the next level.
+[SiteOrigin Premium](https://siteorigin.com/downloads/premium/) enhances Page Builder with a vast array of additional features and settings. Take your layouts to the next level with SiteOrigin Premium addons.
 
-SiteOrigin Premium also includes access to our next-level email support service, perfect for those times when you need fast and effective technical support.
+SiteOrigin Premium includes access to our professional email support service, perfect for those times when you need fast and effective technical support. We're standing by to assist you in any way we can.
 
 == Changelog ==
+
+= 2.12.5 - 17 June 2021 =
+* Modern Parallax: Use the image attachment if available.
+* Modern Parallax: Prevent possible container overflow using CSS.
+* Live Editor: Minor button alignment improvements.
+* Developer: ACF compatibility - use `panelsopen` for more consistent loading.
+* Developer: ACF compatibility - added a check to ensure instance ACF data exists.
+* Developer: Fixed `siteorigin_panels_row_column_count_input` filter.
 
 = 2.12.4 - 04 June 2021 =
 * Restored Tablet Layout row collapse.

@@ -1,0 +1,12 @@
+2021-06-21T15:34:33+00:00 CRITICAL syntax error, unexpected '<', expecting end of file in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 321
+
+2021-06-21T15:36:34+00:00 CRITICAL syntax error, unexpected '<', expecting end of file in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 321
+
+2021-06-21T15:36:40+00:00 CRITICAL Cannot redeclare myshortcode_header_info() (previously declared in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php:5) in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 350
+
+2021-06-21T15:37:21+00:00 CRITICAL Cannot redeclare myshortcode_header_info() (previously declared in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php:5) in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 352
+
+2021-06-21T15:37:35+00:00 CRITICAL Cannot redeclare myshortcode_header_info() (previously declared in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php:5) in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 352
+
+2021-06-21T15:39:36+00:00 CRITICAL Cannot redeclare myshortcode_header_info() (previously declared in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php:5) in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 352
+

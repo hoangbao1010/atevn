@@ -2413,6 +2413,9 @@
     width: 100%;
   }
 }
+.so-panels-live-editor .so-sidebar .siteorigin-panels-builder .so-builder-toolbar .so-tool-button {
+  padding: 2px 9px 2px 9px;
+}
 .so-panels-live-editor .so-sidebar .siteorigin-panels-builder .so-rows-container {
   padding: 10px 10px 0 10px !important;
 }

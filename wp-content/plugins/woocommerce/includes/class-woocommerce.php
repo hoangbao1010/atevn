@@ -8,6 +8,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use Automattic\WooCommerce\Internal\DownloadPermissionsAdjuster;
+use Automattic\WooCommerce\Internal\AssignDefaultCategory;
+use Automattic\WooCommerce\Internal\ProductAttributesLookup\DataRegenerator;
+use Automattic\WooCommerce\Proxies\LegacyProxy;
+
 /**
  * Main WooCommerce Class.
  *
@@ -20,7 +25,16 @@ final class WooCommerce {
 	 *
 	 * @var string
 	 */
-	public $version = '3.6.3';
+	public $version = '5.4.1';
+
+	/**
+	 * WooCommerce Schema version.
+	 *
+	 * @since 4.3 started with version string 430.
+	 *
+	 * @var string
+	 */
+	public $db_version = '430';
 
 	/**
 	 * The single instance of the class.
@@ -180,17 +194,37 @@ final class WooCommerce {
 		register_shutdown_function( array( $this, 'log_errors' ) );
 
 		add_action( 'plugins_loaded', array( $this, 'on_plugins_loaded' ), -1 );
+		add_action( 'admin_notices', array( $this, 'build_dependencies_notice' ) );
 		add_action( 'after_setup_theme', array( $this, 'setup_environment' ) );
 		add_action( 'after_setup_theme', array( $this, 'include_template_functions' ), 11 );
 		add_action( 'init', array( $this, 'init' ), 0 );
 		add_action( 'init', array( 'WC_Shortcodes', 'init' ) );
 		add_action( 'init', array( 'WC_Emails', 'init_transactional_emails' ) );
 		add_action( 'init', array( $this, 'add_image_sizes' ) );
+		add_action( 'init', array( $this, 'load_rest_api' ) );
 		add_action( 'switch_blog', array( $this, 'wpdb_table_fix' ), 0 );
 		add_action( 'activated_plugin', array( $this, 'activated_plugin' ) );
 		add_action( 'deactivated_plugin', array( $this, 'deactivated_plugin' ) );
+		add_action( 'woocommerce_installed', array( $this, 'add_woocommerce_inbox_variant' ) );
+		add_action( 'woocommerce_updated', array( $this, 'add_woocommerce_inbox_variant' ) );
+
+		// These classes set up hooks on instantiation.
+		wc_get_container()->get( DownloadPermissionsAdjuster::class );
+		wc_get_container()->get( AssignDefaultCategory::class );
+		wc_get_container()->get( DataRegenerator::class );
 	}
 
+	/**
+	 * Add woocommerce_inbox_variant for the Remote Inbox Notification.
+	 *
+	 * P2 post can be found at https://wp.me/paJDYF-1uJ.
+	 */
+	public function add_woocommerce_inbox_variant() {
+		$config_name = 'woocommerce_inbox_variant_assignment';
+		if ( false === get_option( $config_name, false ) ) {
+			update_option( $config_name, wp_rand( 1, 12 ) );
+		}
+	}
 	/**
 	 * Ensures fatal errors are logged so they can be picked up in the status report.
 	 *
@@ -198,7 +232,7 @@ final class WooCommerce {
 	 */
 	public function log_errors() {
 		$error = error_get_last();
-		if ( in_array( $error['type'], array( E_ERROR, E_PARSE, E_COMPILE_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR ), true ) ) {
+		if ( $error && in_array( $error['type'], array( E_ERROR, E_PARSE, E_COMPILE_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR ), true ) ) {
 			$logger = wc_get_logger();
 			$logger->critical(
 				/* translators: 1: error message 2: file name and path 3: line number */
@@ -228,6 +262,21 @@ final class WooCommerce {
 		$this->define( 'WC_LOG_DIR', $upload_dir['basedir'] . '/wc-logs/' );
 		$this->define( 'WC_SESSION_CACHE_GROUP', 'wc_session_id' );
 		$this->define( 'WC_TEMPLATE_DEBUG_MODE', false );
+		$this->define( 'WC_NOTICE_MIN_PHP_VERSION', '7.2' );
+		$this->define( 'WC_NOTICE_MIN_WP_VERSION', '5.2' );
+		$this->define( 'WC_PHP_MIN_REQUIREMENTS_NOTICE', 'wp_php_min_requirements_' . WC_NOTICE_MIN_PHP_VERSION . '_' . WC_NOTICE_MIN_WP_VERSION );
+		/** Define if we're checking against major, minor or no versions in the following places:
+		 *   - plugin screen in WP Admin (displaying extra warning when updating to new major versions)
+		 *   - System Status Report ('Installed version not tested with active version of WooCommerce' warning)
+		 *   - core update screen in WP Admin (displaying extra warning when updating to new major versions)
+		 *   - enable/disable automated updates in the plugin screen in WP Admin (if there are any plugins
+		 *      that don't declare compatibility, the auto-update is disabled)
+		 *
+		 * We dropped SemVer before WC 5.0, so all versions are backwards compatible now, thus no more check needed.
+		 * The SSR in the name is preserved for bw compatibility, as this was initially used in System Status Report.
+		 */
+		$this->define( 'WC_SSR_PLUGIN_UPDATE_RELEASE_VERSION_TYPE', 'none' );
+
 	}
 
 	/**
@@ -241,6 +290,8 @@ final class WooCommerce {
 			'payment_tokenmeta'      => 'woocommerce_payment_tokenmeta',
 			'order_itemmeta'         => 'woocommerce_order_itemmeta',
 			'wc_product_meta_lookup' => 'wc_product_meta_lookup',
+			'wc_tax_rate_classes'    => 'wc_tax_rate_classes',
+			'wc_reserved_stock'      => 'wc_reserved_stock',
 		);
 
 		foreach ( $tables as $name => $table ) {
@@ -279,6 +330,13 @@ final class WooCommerce {
 		$is_rest_api_request = ( false !== strpos( $_SERVER['REQUEST_URI'], $rest_prefix ) ); // phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		return apply_filters( 'woocommerce_is_rest_api_request', $is_rest_api_request );
+	}
+
+	/**
+	 * Load REST API.
+	 */
+	public function load_rest_api() {
+		\Automattic\WooCommerce\RestApi\Server::instance()->init();
 	}
 
 	/**
@@ -331,6 +389,11 @@ final class WooCommerce {
 		include_once WC_ABSPATH . 'includes/interfaces/class-wc-log-handler-interface.php';
 		include_once WC_ABSPATH . 'includes/interfaces/class-wc-webhooks-data-store-interface.php';
 		include_once WC_ABSPATH . 'includes/interfaces/class-wc-queue-interface.php';
+
+		/**
+		 * Core traits.
+		 */
+		include_once WC_ABSPATH . 'includes/traits/trait-wc-item-totals.php';
 
 		/**
 		 * Abstract classes.
@@ -391,6 +454,7 @@ final class WooCommerce {
 		include_once WC_ABSPATH . 'includes/queue/class-wc-action-queue.php';
 		include_once WC_ABSPATH . 'includes/queue/class-wc-queue.php';
 		include_once WC_ABSPATH . 'includes/admin/marketplace-suggestions/class-wc-marketplace-updater.php';
+		include_once WC_ABSPATH . 'includes/blocks/class-wc-blocks-utils.php';
 
 		/**
 		 * Data stores - used to store and retrieve CRUD object data from the database.
@@ -425,20 +489,20 @@ final class WooCommerce {
 		 */
 		include_once WC_ABSPATH . 'includes/legacy/class-wc-legacy-api.php';
 		include_once WC_ABSPATH . 'includes/class-wc-api.php';
+		include_once WC_ABSPATH . 'includes/class-wc-rest-authentication.php';
+		include_once WC_ABSPATH . 'includes/class-wc-rest-exception.php';
 		include_once WC_ABSPATH . 'includes/class-wc-auth.php';
 		include_once WC_ABSPATH . 'includes/class-wc-register-wp-admin-settings.php';
 
 		/**
-		 * Blocks.
+		 * WCCOM Site.
 		 */
-		if ( file_exists( WC_ABSPATH . 'includes/blocks/class-wc-block-library.php' ) ) {
-			include_once WC_ABSPATH . 'includes/blocks/class-wc-block-library.php';
-		}
+		include_once WC_ABSPATH . 'includes/wccom-site/class-wc-wccom-site.php';
 
 		/**
-		 * Libraries
+		 * Libraries and packages.
 		 */
-		include_once WC_ABSPATH . 'includes/libraries/action-scheduler/action-scheduler.php';
+		include_once WC_ABSPATH . 'packages/action-scheduler/action-scheduler.php';
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			include_once WC_ABSPATH . 'includes/class-wc-cli.php';
@@ -459,6 +523,7 @@ final class WooCommerce {
 		$this->theme_support_includes();
 		$this->query = new WC_Query();
 		$this->api   = new WC_API();
+		$this->api->init();
 	}
 
 	/**
@@ -467,7 +532,7 @@ final class WooCommerce {
 	 * @since 3.3.0
 	 */
 	private function theme_support_includes() {
-		if ( wc_is_active_theme( array( 'twentynineteen', 'twentyseventeen', 'twentysixteen', 'twentyfifteen', 'twentyfourteen', 'twentythirteen', 'twentyeleven', 'twentytwelve', 'twentyten' ) ) ) {
+		if ( wc_is_wp_default_theme_active() ) {
 			switch ( get_template() ) {
 				case 'twentyten':
 					include_once WC_ABSPATH . 'includes/theme-support/class-wc-twenty-ten.php';
@@ -495,6 +560,12 @@ final class WooCommerce {
 					break;
 				case 'twentynineteen':
 					include_once WC_ABSPATH . 'includes/theme-support/class-wc-twenty-nineteen.php';
+					break;
+				case 'twentytwenty':
+					include_once WC_ABSPATH . 'includes/theme-support/class-wc-twenty-twenty.php';
+					break;
+				case 'twentytwentyone':
+					include_once WC_ABSPATH . 'includes/theme-support/class-wc-twenty-twenty-one.php';
 					break;
 			}
 		}
@@ -546,17 +617,7 @@ final class WooCommerce {
 
 		// Classes/actions loaded for the frontend and for ajax requests.
 		if ( $this->is_request( 'frontend' ) ) {
-			// Session class, handles session data for users - can be overwritten if custom handler is needed.
-			$session_class = apply_filters( 'woocommerce_session_handler', 'WC_Session_Handler' );
-			$this->session = new $session_class();
-			$this->session->init();
-
-			$this->customer = new WC_Customer( get_current_user_id(), true );
-			// Cart needs the customer info.
-			$this->cart = new WC_Cart();
-
-			// Customer should be saved during shutdown.
-			add_action( 'shutdown', array( $this->customer, 'save' ), 10 );
+			wc_load_cart();
 		}
 
 		$this->load_webhooks();
@@ -575,7 +636,7 @@ final class WooCommerce {
 	 *      - WP_LANG_DIR/plugins/woocommerce-LOCALE.mo
 	 */
 	public function load_plugin_textdomain() {
-		$locale = is_admin() && function_exists( 'get_user_locale' ) ? get_user_locale() : get_locale();
+		$locale = determine_locale();
 		$locale = apply_filters( 'plugin_locale', $locale, 'woocommerce' );
 
 		unload_textdomain( 'woocommerce' );
@@ -633,7 +694,7 @@ final class WooCommerce {
 		/**
 		 * Legacy image sizes.
 		 *
-		 * @deprecated These sizes will be removed in 4.0.
+		 * @deprecated 3.3.0 These sizes will be removed in 4.6.0.
 		 */
 		add_image_size( 'shop_catalog', $thumbnail['width'], $thumbnail['height'], $thumbnail['crop'] );
 		add_image_size( 'shop_single', $single['width'], $single['height'], $single['crop'] );
@@ -726,6 +787,39 @@ final class WooCommerce {
 	}
 
 	/**
+	 * Initialize the customer and cart objects and setup customer saving on shutdown.
+	 *
+	 * @since 3.6.4
+	 * @return void
+	 */
+	public function initialize_cart() {
+		// Cart needs customer info.
+		if ( is_null( $this->customer ) || ! $this->customer instanceof WC_Customer ) {
+			$this->customer = new WC_Customer( get_current_user_id(), true );
+			// Customer should be saved during shutdown.
+			add_action( 'shutdown', array( $this->customer, 'save' ), 10 );
+		}
+		if ( is_null( $this->cart ) || ! $this->cart instanceof WC_Cart ) {
+			$this->cart = new WC_Cart();
+		}
+	}
+
+	/**
+	 * Initialize the session class.
+	 *
+	 * @since 3.6.4
+	 * @return void
+	 */
+	public function initialize_session() {
+		// Session class, handles session data for users - can be overwritten if custom handler is needed.
+		$session_class = apply_filters( 'woocommerce_session_handler', 'WC_Session_Handler' );
+		if ( is_null( $this->session ) || ! $this->session instanceof $session_class ) {
+			$this->session = new $session_class();
+			$this->session->init();
+		}
+	}
+
+	/**
 	 * Set tablenames inside WPDB object.
 	 */
 	public function wpdb_table_fix() {
@@ -740,6 +834,10 @@ final class WooCommerce {
 	 */
 	public function activated_plugin( $filename ) {
 		include_once dirname( __FILE__ ) . '/admin/helper/class-wc-helper.php';
+
+		if ( '/woocommerce.php' === substr( $filename, -16 ) ) {
+			set_transient( 'woocommerce_activated_plugin', $filename );
+		}
 
 		WC_Helper::activated_plugin( $filename );
 	}
@@ -799,5 +897,110 @@ final class WooCommerce {
 	 */
 	public function mailer() {
 		return WC_Emails::instance();
+	}
+
+	/**
+	 * Check if plugin assets are built and minified
+	 *
+	 * @return bool
+	 */
+	public function build_dependencies_satisfied() {
+		// Check if we have compiled CSS.
+		if ( ! file_exists( WC()->plugin_path() . '/assets/css/admin.css' ) ) {
+			return false;
+		}
+
+		// Check if we have minified JS.
+		if ( ! file_exists( WC()->plugin_path() . '/assets/js/admin/woocommerce_admin.min.js' ) ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Output a admin notice when build dependencies not met.
+	 *
+	 * @return void
+	 */
+	public function build_dependencies_notice() {
+		if ( $this->build_dependencies_satisfied() ) {
+			return;
+		}
+
+		$message_one = __( 'You have installed a development version of WooCommerce which requires files to be built and minified. From the plugin directory, run <code>grunt assets</code> to build and minify assets.', 'woocommerce' );
+		$message_two = sprintf(
+			/* translators: 1: URL of WordPress.org Repository 2: URL of the GitHub Repository release page */
+			__( 'Or you can download a pre-built version of the plugin from the <a href="%1$s">WordPress.org repository</a> or by visiting <a href="%2$s">the releases page in the GitHub repository</a>.', 'woocommerce' ),
+			'https://wordpress.org/plugins/woocommerce/',
+			'https://github.com/woocommerce/woocommerce/releases'
+		);
+		printf( '<div class="error"><p>%s %s</p></div>', $message_one, $message_two ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+
+	/**
+	 * Is the WooCommerce Admin actively included in the WooCommerce core?
+	 * Based on presence of a basic WC Admin function.
+	 *
+	 * @return boolean
+	 */
+	public function is_wc_admin_active() {
+		return function_exists( 'wc_admin_url' );
+	}
+
+	/**
+	 * Call a user function. This should be used to execute any non-idempotent function, especially
+	 * those in the `includes` directory or provided by WordPress.
+	 *
+	 * This method can be useful for unit tests, since functions called using this method
+	 * can be easily mocked by using WC_Unit_Test_Case::register_legacy_proxy_function_mocks.
+	 *
+	 * @param string $function_name The function to execute.
+	 * @param mixed  ...$parameters The parameters to pass to the function.
+	 *
+	 * @return mixed The result from the function.
+	 *
+	 * @since 4.4
+	 */
+	public function call_function( $function_name, ...$parameters ) {
+		return wc_get_container()->get( LegacyProxy::class )->call_function( $function_name, ...$parameters );
+	}
+
+	/**
+	 * Call a static method in a class. This should be used to execute any non-idempotent method in classes
+	 * from the `includes` directory.
+	 *
+	 * This method can be useful for unit tests, since methods called using this method
+	 * can be easily mocked by using WC_Unit_Test_Case::register_legacy_proxy_static_mocks.
+	 *
+	 * @param string $class_name The name of the class containing the method.
+	 * @param string $method_name The name of the method.
+	 * @param mixed  ...$parameters The parameters to pass to the method.
+	 *
+	 * @return mixed The result from the method.
+	 *
+	 * @since 4.4
+	 */
+	public function call_static( $class_name, $method_name, ...$parameters ) {
+		return wc_get_container()->get( LegacyProxy::class )->call_static( $class_name, $method_name, ...$parameters );
+	}
+
+	/**
+	 * Gets an instance of a given legacy class.
+	 * This must not be used to get instances of classes in the `src` directory.
+	 *
+	 * This method can be useful for unit tests, since objects obtained using this method
+	 * can be easily mocked by using WC_Unit_Test_Case::register_legacy_proxy_class_mocks.
+	 *
+	 * @param string $class_name The name of the class to get an instance for.
+	 * @param mixed  ...$args Parameters to be passed to the class constructor or to the appropriate internal 'get_instance_of_' method.
+	 *
+	 * @return object The instance of the class.
+	 * @throws \Exception The requested class belongs to the `src` directory, or there was an error creating an instance of the class.
+	 *
+	 * @since 4.4
+	 */
+	public function get_instance_of( string $class_name, ...$args ) {
+		return wc_get_container()->get( LegacyProxy::class )->get_instance_of( $class_name, ...$args );
 	}
 }

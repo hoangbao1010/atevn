@@ -2,7 +2,7 @@
 /**
  * WooCommerce advanced settings
  *
- * @package  WooCommerce/Admin
+ * @package  WooCommerce\Admin
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -51,6 +51,7 @@ class WC_Settings_Advanced extends WC_Settings_Page {
 	 * Get settings array.
 	 *
 	 * @param string $current_section Current section slug.
+	 *
 	 * @return array
 	 */
 	public function get_settings( $current_section = '' ) {
@@ -73,11 +74,19 @@ class WC_Settings_Advanced extends WC_Settings_Page {
 						/* Translators: %s Page contents. */
 						'desc'     => sprintf( __( 'Page contents: [%s]', 'woocommerce' ), apply_filters( 'woocommerce_cart_shortcode_tag', 'woocommerce_cart' ) ),
 						'id'       => 'woocommerce_cart_page_id',
-						'type'     => 'single_select_page',
+						'type'     => 'single_select_page_with_search',
 						'default'  => '',
-						'class'    => 'wc-enhanced-select-nostd',
+						'class'    => 'wc-page-search',
 						'css'      => 'min-width:300px;',
+						'args'     => array(
+							'exclude' =>
+								array(
+									wc_get_page_id( 'checkout' ),
+									wc_get_page_id( 'myaccount' ),
+								),
+						),
 						'desc_tip' => true,
+						'autoload' => false,
 					),
 
 					array(
@@ -85,11 +94,19 @@ class WC_Settings_Advanced extends WC_Settings_Page {
 						/* Translators: %s Page contents. */
 						'desc'     => sprintf( __( 'Page contents: [%s]', 'woocommerce' ), apply_filters( 'woocommerce_checkout_shortcode_tag', 'woocommerce_checkout' ) ),
 						'id'       => 'woocommerce_checkout_page_id',
-						'type'     => 'single_select_page',
-						'default'  => '',
-						'class'    => 'wc-enhanced-select-nostd',
+						'type'     => 'single_select_page_with_search',
+						'default'  => wc_get_page_id( 'checkout' ),
+						'class'    => 'wc-page-search',
 						'css'      => 'min-width:300px;',
+						'args'     => array(
+							'exclude' =>
+								array(
+									wc_get_page_id( 'cart' ),
+									wc_get_page_id( 'myaccount' ),
+								),
+						),
 						'desc_tip' => true,
+						'autoload' => false,
 					),
 
 					array(
@@ -97,11 +114,19 @@ class WC_Settings_Advanced extends WC_Settings_Page {
 						/* Translators: %s Page contents. */
 						'desc'     => sprintf( __( 'Page contents: [%s]', 'woocommerce' ), apply_filters( 'woocommerce_my_account_shortcode_tag', 'woocommerce_my_account' ) ),
 						'id'       => 'woocommerce_myaccount_page_id',
-						'type'     => 'single_select_page',
+						'type'     => 'single_select_page_with_search',
 						'default'  => '',
-						'class'    => 'wc-enhanced-select-nostd',
+						'class'    => 'wc-page-search',
 						'css'      => 'min-width:300px;',
+						'args'     => array(
+							'exclude' =>
+								array(
+									wc_get_page_id( 'cart' ),
+									wc_get_page_id( 'checkout' ),
+								),
+						),
 						'desc_tip' => true,
+						'autoload' => false,
 					),
 
 					array(
@@ -109,9 +134,9 @@ class WC_Settings_Advanced extends WC_Settings_Page {
 						'desc'     => __( 'If you define a "Terms" page the customer will be asked if they accept them when checking out.', 'woocommerce' ),
 						'id'       => 'woocommerce_terms_page_id',
 						'default'  => '',
-						'class'    => 'wc-enhanced-select-nostd',
+						'class'    => 'wc-page-search',
 						'css'      => 'min-width:300px;',
-						'type'     => 'single_select_page',
+						'type'     => 'single_select_page_with_search',
 						'args'     => array( 'exclude' => wc_get_page_id( 'checkout' ) ),
 						'desc_tip' => true,
 						'autoload' => false,
@@ -158,7 +183,7 @@ class WC_Settings_Advanced extends WC_Settings_Page {
 						'title' => __( 'Checkout endpoints', 'woocommerce' ),
 						'type'  => 'title',
 						'desc'  => __( 'Endpoints are appended to your page URLs to handle specific actions during the checkout process. They should be unique.', 'woocommerce' ),
-						'id'    => 'account_endpoint_options',
+						'id'    => 'checkout_endpoint_options',
 					),
 
 					array(
@@ -381,7 +406,9 @@ class WC_Settings_Advanced extends WC_Settings_Page {
 	 * Form method.
 	 *
 	 * @deprecated 3.4.4
+	 *
 	 * @param  string $method Method name.
+	 *
 	 * @return string
 	 */
 	public function form_method( $method ) {
@@ -430,6 +457,19 @@ class WC_Settings_Advanced extends WC_Settings_Page {
 				$_POST['woocommerce_terms_page_id'] = '';
 			}
 
+			// Prevent the Cart, checkout and my account page from being set to the same page.
+			if ( isset( $_POST['woocommerce_cart_page_id'], $_POST['woocommerce_checkout_page_id'], $_POST['woocommerce_myaccount_page_id'] ) ) { // WPCS: input var ok, CSRF ok.
+				if ( $_POST['woocommerce_cart_page_id'] === $_POST['woocommerce_checkout_page_id'] ) { // WPCS: input var ok, CSRF ok.
+					$_POST['woocommerce_checkout_page_id'] = '';
+				}
+				if ( $_POST['woocommerce_cart_page_id'] === $_POST['woocommerce_myaccount_page_id'] ) { // WPCS: input var ok, CSRF ok.
+					$_POST['woocommerce_myaccount_page_id'] = '';
+				}
+				if ( $_POST['woocommerce_checkout_page_id'] === $_POST['woocommerce_myaccount_page_id'] ) { // WPCS: input var ok, CSRF ok.
+					$_POST['woocommerce_myaccount_page_id'] = '';
+				}
+			}
+
 			WC_Admin_Settings::save_fields( $settings );
 
 			if ( $current_section ) {
@@ -445,6 +485,7 @@ class WC_Settings_Advanced extends WC_Settings_Page {
  * @deprecated 3.4 in favour of WC_Settings_Advanced.
  * @todo remove in 4.0.
  */
-class WC_Settings_Rest_API extends WC_Settings_Advanced {} // @codingStandardsIgnoreLine.
+class WC_Settings_Rest_API extends WC_Settings_Advanced {
+} // @codingStandardsIgnoreLine.
 
 return new WC_Settings_Advanced();

@@ -2,7 +2,7 @@
 /**
  * WooCommerce General Settings
  *
- * @package WooCommerce/Admin
+ * @package WooCommerce\Admin
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -37,17 +37,6 @@ class WC_Settings_General extends WC_Settings_Page {
 
 		foreach ( $currency_code_options as $code => $name ) {
 			$currency_code_options[ $code ] = $name . ' (' . get_woocommerce_currency_symbol( $code ) . ')';
-		}
-
-		$woocommerce_default_customer_address_options = array(
-			''                 => __( 'No location by default', 'woocommerce' ),
-			'base'             => __( 'Shop base address', 'woocommerce' ),
-			'geolocation'      => __( 'Geolocate', 'woocommerce' ),
-			'geolocation_ajax' => __( 'Geolocate (with page caching support)', 'woocommerce' ),
-		);
-
-		if ( version_compare( PHP_VERSION, '5.4', '<' ) ) {
-			unset( $woocommerce_default_customer_address_options['geolocation'], $woocommerce_default_customer_address_options['geolocation_ajax'] );
 		}
 
 		$settings = apply_filters(
@@ -92,7 +81,7 @@ class WC_Settings_General extends WC_Settings_Page {
 					'title'    => __( 'Country / State', 'woocommerce' ),
 					'desc'     => __( 'The country and state or province, if any, in which your business is located.', 'woocommerce' ),
 					'id'       => 'woocommerce_default_country',
-					'default'  => 'GB',
+					'default'  => 'US:CA',
 					'type'     => 'single_select_country',
 					'desc_tip' => true,
 				),
@@ -182,10 +171,15 @@ class WC_Settings_General extends WC_Settings_Page {
 					'title'    => __( 'Default customer location', 'woocommerce' ),
 					'id'       => 'woocommerce_default_customer_address',
 					'desc_tip' => __( 'This option determines a customers default location. The MaxMind GeoLite Database will be periodically downloaded to your wp-content directory if using geolocation.', 'woocommerce' ),
-					'default'  => 'geolocation',
+					'default'  => 'base',
 					'type'     => 'select',
 					'class'    => 'wc-enhanced-select',
-					'options'  => $woocommerce_default_customer_address_options,
+					'options'  => array(
+						''                 => __( 'No location by default', 'woocommerce' ),
+						'base'             => __( 'Shop base address', 'woocommerce' ),
+						'geolocation'      => __( 'Geolocate', 'woocommerce' ),
+						'geolocation_ajax' => __( 'Geolocate (with page caching support)', 'woocommerce' ),
+					),
 				),
 
 				array(
@@ -235,7 +229,7 @@ class WC_Settings_General extends WC_Settings_Page {
 					'title'    => __( 'Currency', 'woocommerce' ),
 					'desc'     => __( 'This controls what currency prices are listed at in the catalog and which currency gateways will take payments in.', 'woocommerce' ),
 					'id'       => 'woocommerce_currency',
-					'default'  => 'GBP',
+					'default'  => 'USD',
 					'type'     => 'select',
 					'class'    => 'wc-enhanced-select',
 					'desc_tip' => true,

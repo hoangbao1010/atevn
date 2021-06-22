@@ -2,15 +2,13 @@
 /**
  * WooCommerce Integration Settings
  *
- * @author      WooThemes
- * @category    Admin
- * @package     WooCommerce/Admin
- * @version     2.1.0
+ * @package  WooCommerce\Admin
+ * @version  2.1.0
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
-}
+use Automattic\Jetpack\Constants;
+
+defined( 'ABSPATH' ) || exit;
 
 if ( ! class_exists( 'WC_Settings_Integrations', false ) ) :
 
@@ -41,14 +39,14 @@ if ( ! class_exists( 'WC_Settings_Integrations', false ) ) :
 
 			$sections = array();
 
-			if ( ! defined( 'WC_INSTALLING' ) ) {
+			if ( ! Constants::is_defined( 'WC_INSTALLING' ) ) {
 				$integrations = WC()->integrations->get_integrations();
 
 				if ( ! $current_section && ! empty( $integrations ) ) {
 					$current_section = current( $integrations )->id;
 				}
 
-				if ( sizeof( $integrations ) > 1 ) {
+				if ( count( $integrations ) > 1 ) {
 					foreach ( $integrations as $integration ) {
 						$title                                      = empty( $integration->method_title ) ? ucfirst( $integration->id ) : $integration->method_title;
 						$sections[ strtolower( $integration->id ) ] = esc_html( $title );

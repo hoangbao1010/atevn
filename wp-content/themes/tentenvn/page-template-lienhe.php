@@ -4,14 +4,17 @@ Template Name: page-template-lienhe
 */
 get_header(); 
 ?>	
-
 <div class="page-wrapper">
-	<div class="g_content">
-		<div id="breadcrumb" class="breadcrumb">
-			<ul>
-				<?php  echo the_breadcrumb(); ?>
-			</ul>
-		</div>
+	<div class="qb_content">
+		<div class="breadcrumb">
+			<div class="container">
+				<div class="breadcrumb_ct">
+     <?php $page_title = $wp_query->post->post_title; ?>
+     <h2 class="title_page"><?php echo $page_title; ?></h2> 
+					<?php  echo the_breadcrumb(); ?>
+				</div>
+			</div>
+		</div> 
 		<?php 
 		if(have_posts()) :
 			while(have_posts()) : the_post();

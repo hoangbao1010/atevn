@@ -6,15 +6,15 @@ get_header();
 		<div class="breadcrumb">
 			<div class="container">
 				<div class="breadcrumb_ct">
-					<?php $cat_knowledge_name = get_cat_name(1);?>
-					<h2><?php echo $cat_knowledge_name; ?></h2>
+					<?php $page_title = $wp_query->post->post_title; ?>
+					<h2 class="title_page"><?php echo $page_title; ?></h2> 
 					<?php  echo the_breadcrumb(); ?>
 				</div>
 			</div>
 		</div> 
 		<div class="single_page">
 			<div class="container">
-				<div class="row">
+				<div class="row ">
 					<div class="col-sm-3 ">
 						<?php if(is_active_sidebar('sidebar')) : ?>
 							<div class="qb_sidebar_right">
@@ -29,7 +29,7 @@ get_header();
 								<div class=" col-sm-9">
 									<article class="content_single_post">
 										<div class="single_post_info">
-											<h2><?php the_title(); ?></h2>
+											<h2 class="title_defauilt_single_page"><?php the_title(); ?></h2>
 										</div>
 										<div class="text_content">
 											<?php  the_content(); ?>

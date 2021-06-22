@@ -1,0 +1,37 @@
+2021-06-19T14:39:57+00:00 CRITICAL Uncaught ArgumentCountError: Too few arguments to function get_cat_name(), 0 passed in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\page.php on line 33 and exactly 1 expected in C:\xampp\htdocs\atevn\wp-includes\category.php:223
+Stack trace:
+#0 C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\page.php(33): get_cat_name()
+#1 C:\xampp\htdocs\atevn\wp-includes\template-loader.php(106): include('C:\\xampp\\htdocs...')
+#2 C:\xampp\htdocs\atevn\wp-blog-header.php(19): require_once('C:\\xampp\\htdocs...')
+#3 C:\xampp\htdocs\atevn\index.php(17): require('C:\\xampp\\htdocs...')
+#4 {main}
+  thrown in C:\xampp\htdocs\atevn\wp-includes\category.php on line 223
+
+2021-06-19T16:09:33+00:00 CRITICAL Uncaught Error: Call to a member function get_categories() on null in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php:151
+Stack trace:
+#0 C:\xampp\htdocs\atevn\wp-includes\shortcodes.php(343): myshortcode_cat_pro('', '', 'sc_cat_pro')
+#1 [internal function]: do_shortcode_tag(Array)
+#2 C:\xampp\htdocs\atevn\wp-includes\shortcodes.php(218): preg_replace_callback('/\\[(\\[?)(sc_cat...', 'do_shortcode_ta...', '<p>[sc_cat_pro]...')
+#3 C:\xampp\htdocs\atevn\wp-content\plugins\black-studio-tinymce-widget\includes\class-text-filters.php(174): do_shortcode('<p>[sc_cat_pro]...')
+#4 C:\xampp\htdocs\atevn\wp-includes\class-wp-hook.php(292): Black_Studio_TinyMCE_Text_Filters->do_shortcode('<p>[sc_cat_pro]...', Array, Object(WP_Widget_Black_Studio_TinyMCE))
+#5 C:\xampp\htdocs\atevn\wp-includes\plugin.php(212): WP_Hook->apply_filters('<p>[sc_cat_pro]...', Array)
+#6 C:\xampp\htdocs\atevn\wp-content\plugins\black-studio-tinymce-widget\includes\class-widget.php(55): apply_filters('wid in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 151
+
+2021-06-19T16:29:32+00:00 CRITICAL Object of class WP_Error could not be converted to string in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 172
+
+2021-06-19T16:30:10+00:00 CRITICAL Object of class WP_Error could not be converted to string in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 172
+
+2021-06-19T16:30:19+00:00 CRITICAL Object of class WP_Error could not be converted to string in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 172
+
+2021-06-19T16:30:53+00:00 CRITICAL Object of class WP_Error could not be converted to string in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 172
+
+2021-06-19T16:31:34+00:00 CRITICAL Object of class WP_Error could not be converted to string in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 172
+
+2021-06-19T16:32:08+00:00 CRITICAL Object of class WP_Error could not be converted to string in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 172
+
+2021-06-19T16:32:42+00:00 CRITICAL Object of class WP_Error could not be converted to string in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 172
+
+2021-06-19T16:47:31+00:00 CRITICAL Object of class WP_Term could not be converted to string in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 181
+
+2021-06-19T16:54:19+00:00 CRITICAL Object of class WP_Term could not be converted to string in C:\xampp\htdocs\atevn\wp-content\themes\tentenvn\includes\frontend\shortcode\shortcode.php on line 181
+
